@@ -17,17 +17,17 @@ You'll be able to switch between different text displays depending on the type o
 
 | Type        | Example                                                                         |
 |-------------|---------------------------------------------------------------------------------|
-| Explanation | <img src="./source/explanation.png" width="50%" height="50%" alt="Explanation"> |
-| Choice      | <img src="./source/choice.png" width="50%" height="50%" alt="Choice">           |
-| Dialogue    | <img src="./source/Dialogue.png" width="50%" height="50%"alt="Dialogue">        |
-| Quest       | <img src="./source/Quest.png" width="50%" height="50%" alt="Quest">             |
-| Tutorial    | <img src="./source/tutorial.png" width="50%" height="50%" alt="Tutorial">       |
+| Explanation | <img src="./source/explanation.png" width="60%" height="50%" alt="Explanation"> |
+| Choice      | <img src="./source/choice.png" width="60%" height="50%" alt="Choice">           |
+| Dialogue    | <img src="./source/Dialogue.png" width="60%" height="50%" alt="Dialogue">       |
+| Quest       | <img src="./source/Quest.png" width="60%" height="50%" alt="Quest">             |
+| Tutorial    | <img src="./source/tutorial.png" width="60%" height="50%" alt="Tutorial">       |
 
 ___
 
 ## High-Fidelity Prototype
 
-<img src="./source/Prototype.png" width="50%" height="50%" alt="Prototype">
+<img src="./source/Prototype.png" width="60%" height="60%" alt="Prototype">
 
 This is the prototype for our software, made with `Figma`. As you can see, all the functionalities described previously are present in this prototype.
 
@@ -38,3 +38,6 @@ This is the prototype for our software, made with `Figma`. As you can see, all t
 - **Toolbar Functions**: The toolbar at the top of the screen allows you to change the directory you're working on, modify parameters, save your modifications, and use `GPT tools`.
 
 With the integration of `ChatGPT`, you can use it for purposes such as translation or correction. Different models will be available, such as providing 10 propositions to select the best one.
+
+Here's the link of the Figma if you want a better look of the prototype:
+[Figma](https://www.figma.com/proto/pHbs6hODgOUGmSj3VI7xIB/Untitled?node-id=1-2&t=duxQtTR3rCX32GZz-0&scaling=contain&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=1%3A2)
