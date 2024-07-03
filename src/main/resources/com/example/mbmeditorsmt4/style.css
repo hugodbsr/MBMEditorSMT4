@@ -1,0 +1,28 @@
+@font-face {
+    font-family: 'Overpass';
+    src: url('./overpass-bold.ttf');
+}
+
+.textAreaCustomFont {
+    -fx-font-family: 'Overpass', sans-serif;
+    -fx-font-size: 16,5px;
+    -fx-background-color:  rgba(0, 0, 0, 0);
+    -fx-border-color:  rgba(0, 0, 0, 0);
+}
+
+.textAreaCustomFont .scroll-pane{
+    -fx-hbar-policy: never;
+    -fx-vbar-policy: never;
+}
+
+.textFieldCustom{
+    -fx-font-family: 'Overpass', sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color:  rgba(0, 0, 0, 0);
+    -fx-border-color:  rgba(0, 0, 0, 0);
+    -fx-text-fill: white;
+}
+
+.textAreaCustomFont .text{
+    -fx-line-spacing: -12px;
+}

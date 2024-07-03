@@ -1,6 +1,7 @@
 module com.example.mbmeditorsmt4 {
     requires javafx.controls;
     requires javafx.fxml;
+    requires java.xml;
 
 
     opens com.example.mbmeditorsmt4 to javafx.fxml;
