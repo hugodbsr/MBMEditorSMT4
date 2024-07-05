@@ -60,9 +60,20 @@ public class HelloController {
     @FXML
     private MenuItem MenuSelectFolder;
 
+    @FXML
+    private TextField NameEntry;
+
+    @FXML
+    private Button PreviousText;
+
+    @FXML
+    private Button NextText;
+
     DirectoryChooser directoryChooser = new DirectoryChooser();
     private File selectedDirectory;
-    private HashMap<String, String> fileLocations = new HashMap<>();
+    private final HashMap<String, String> fileLocations = new HashMap<>();
+    private int actualTextDisplay = 0;
+    private Format actualFormat;
 
     @FXML
     protected void initialize() {
@@ -71,6 +82,9 @@ public class HelloController {
         blueButton.setOnAction(event -> changeTextColor(Color.BLUE));
         afficherTexteTraduitButton.setOnAction(event -> displayTranslatedText());
         afficherTexteDorigineButton.setOnAction(event -> displayOriginalText());
+
+        PreviousText.setOnAction(event -> ChangeDisplayedText("PREVIOUS"));
+        NextText.setOnAction(event -> ChangeDisplayedText("NEXT"));
 
         directoryChooser = new DirectoryChooser();
 
@@ -99,10 +113,41 @@ public class HelloController {
 
         IDView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                String selectedId = newValue.substring(2); // Pour enlever "id" du début
+                String selectedId = newValue.substring(2);
                 displaySourceForId(selectedId);
             }
         });
+    }
+
+    private void ChangeButtonEnable(){
+        if(actualFormat == null || actualFormat.getCorrectTextFormat().isEmpty()){
+            NextText.setDisable(true);
+            NextText.setDisable(false);
+        }
+        PreviousText.setDisable(actualTextDisplay == 0);
+        if(actualTextDisplay < actualFormat.getCorrectTextFormat().size()){
+            NextText.setDisable(false);
+        }
+        if(actualTextDisplay == actualFormat.getCorrectTextFormat().size()-1){
+            NextText.setDisable(true);
+        }
+
+    }
+
+    private void ChangeDisplayedText(String direction){
+        if(!actualFormat.getCorrectTextFormat().isEmpty()){
+            if(direction.equals("NEXT") && actualTextDisplay < actualFormat.getCorrectTextFormat().size()-1){
+                actualTextDisplay++;
+                TextEntry.setText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
+                NameEntry.setText(actualFormat.getSpeakerName());
+            }
+            if(direction.equals("PREVIOUS") && actualTextDisplay > 0){
+                actualTextDisplay--;
+                TextEntry.setText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
+                NameEntry.setText(actualFormat.getSpeakerName());
+            }
+            ChangeButtonEnable();
+        }
     }
 
     private void displaySourceForId(String id) {
@@ -128,8 +173,14 @@ public class HelloController {
                                 if (element.hasAttribute("id") && element.getAttribute("id").equals(id)) {
                                     NodeList sourceList = element.getElementsByTagName("source");
                                     if (sourceList.getLength() > 0) {
+                                        actualTextDisplay = 0;
                                         Node sourceNode = sourceList.item(0);
                                         XMLText.setText(sourceNode.getTextContent());
+                                        Format format = new Format(sourceNode.getTextContent());
+                                        actualFormat = format;
+                                        TextEntry.setText(format.getCorrectTextFormat().get(0));
+                                        NameEntry.setText(format.getSpeakerName());
+                                        ChangeButtonEnable();
                                         return;
                                     }
                                 }
@@ -142,7 +193,6 @@ public class HelloController {
             }
         }
     }
-
 
     private void displayIdsFromXml(File file) {
         if (selectedDirectory != null) {
@@ -227,7 +277,7 @@ public class HelloController {
             }
             return relativePath;
         } else {
-            return null; // Handle error case
+            return null;
         }
     }
 
