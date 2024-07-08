@@ -20,6 +20,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import org.fxmisc.richtext.InlineCssTextArea?>
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="519.0" prefWidth="1018.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mbmeditorsmt4.HelloController">
     <children>
         <BorderPane prefHeight="518.0" prefWidth="1018.0">
@@ -102,8 +103,8 @@
                                         <Image url="@Dialogue.png" />
                                     </image>
                                 </ImageView>
-                                <TextArea fx:id="TextEntry" layoutX="31.0" layoutY="150.0" maxHeight="85.0" prefHeight="85.0" prefWidth="467.0" styleClass="textAreaCustomFont" />
-                                <TextField fx:id="NameEntry" alignment="CENTER" layoutX="61.0" layoutY="119.0" prefHeight="20.0" prefWidth="190.0" styleClass="textFieldCustom">
+                                <InlineCssTextArea fx:id="TextEntry" layoutX="31.0" layoutY="150.0" maxHeight="85.0" prefHeight="85.0" prefWidth="467.0" styleClass="textAreaCustomFont" disable="true" />
+                                <TextField fx:id="NameEntry" alignment="CENTER" layoutX="61.0" layoutY="119.0" prefHeight="20.0" prefWidth="190.0" styleClass="textFieldCustom" disable="true">
                                     <font>
                                         <Font size="8.0" />
                                     </font>

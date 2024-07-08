@@ -2,6 +2,7 @@ module com.example.mbmeditorsmt4 {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.xml;
+    requires org.fxmisc.richtext;
 
 
     opens com.example.mbmeditorsmt4 to javafx.fxml;

@@ -2,19 +2,20 @@ package com.example.mbmeditorsmt4;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.paint.Color;
 import javafx.stage.DirectoryChooser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.fxmisc.richtext.InlineCssTextArea;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class HelloController {
@@ -46,7 +47,7 @@ public class HelloController {
     private Button FolderButton;
 
     @FXML
-    private TextArea TextEntry;
+    private InlineCssTextArea TextEntry;
 
     @FXML
     private TextArea XMLText;
@@ -74,14 +75,16 @@ public class HelloController {
     private final HashMap<String, String> fileLocations = new HashMap<>();
     private int actualTextDisplay = 0;
     private Format actualFormat;
+    private String toDisplay = "source";
+    private String actualID;
 
     @FXML
     protected void initialize() {
-        redButton.setOnAction(event -> changeTextColor(Color.RED));
-        blackButton.setOnAction(event -> changeTextColor(Color.BLACK));
-        blueButton.setOnAction(event -> changeTextColor(Color.BLUE));
-        afficherTexteTraduitButton.setOnAction(event -> displayTranslatedText());
-        afficherTexteDorigineButton.setOnAction(event -> displayOriginalText());
+        redButton.setOnAction(event -> changeTextColor("£", "red"));
+        blackButton.setOnAction(event -> changeTextColor("§", "black"));
+        blueButton.setOnAction(event -> changeTextColor("µ", "blue"));
+        afficherTexteTraduitButton.setOnAction(event -> displaySource());
+        afficherTexteDorigineButton.setOnAction(event -> displayTarget());
 
         PreviousText.setOnAction(event -> ChangeDisplayedText("PREVIOUS"));
         NextText.setOnAction(event -> ChangeDisplayedText("NEXT"));
@@ -91,13 +94,13 @@ public class HelloController {
         FolderButton.setOnAction(event -> SelectAndLoadFolder());
         MenuSelectFolder.setOnAction(event -> SelectAndLoadFolder());
 
-        TextEntry.textProperty().addListener((observable, oldValue, newValue) -> {
-            int lineCount = newValue.split("\n", -1).length - 1;
-            if (lineCount > 2) {
-                TextEntry.setText(oldValue);
-                ErrorLabel.setText("Cannot create a new line");
-            } else {
-                ErrorLabel.setText("");
+        TextEntry.setOnKeyTyped(event -> updateTextEntry());
+
+        NameEntry.setOnKeyTyped(e -> {
+            if(!actualFormat.getSpeakerName().equals(XMLText.getText())){
+                actualFormat.setSpeakerName(NameEntry.getText());
+                actualFormat.convertToCode();
+                XMLText.setText(actualFormat.getCodeTextFormat());
             }
         });
 
@@ -113,8 +116,8 @@ public class HelloController {
 
         IDView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                String selectedId = newValue.substring(2);
-                displaySourceForId(selectedId);
+                actualID = newValue.substring(2);
+                displayForId(actualID, toDisplay);
             }
         });
     }
@@ -131,26 +134,90 @@ public class HelloController {
         if(actualTextDisplay == actualFormat.getCorrectTextFormat().size()-1){
             NextText.setDisable(true);
         }
+    }
 
+    private void updateTextEntry(){
+        if (TextEntry.getCurrentParagraph() > 2) {
+            TextEntry.deletePreviousChar();
+            ErrorLabel.setText("Cannot create a new line");
+        } else {
+            ErrorLabel.setText("");
+        }
+        if(!actualFormat.getCorrectTextFormat().get(actualTextDisplay).equals(TextEntry.getText())){
+            ArrayList<String> format = actualFormat.getCorrectTextFormat();
+            if(format.get(actualTextDisplay).isEmpty()){
+                format.set(actualTextDisplay, TextEntry.getText());
+            }
+            else{
+                int i = 0;
+                int j = 0;
+                boolean found = false;
+                while(i < format.get(actualTextDisplay).length() && !found){
+                    if(format.get(actualTextDisplay).charAt(i) == '£' || format.get(actualTextDisplay).charAt(i) == 'µ' || format.get(actualTextDisplay).charAt(i) == '§'){
+                        i++;
+                    }
+                    if(j>=TextEntry.getText().length() && i<format.get(actualTextDisplay).length()){
+                        format.set(actualTextDisplay, format.get(actualTextDisplay).substring(0, i));
+                        found = true;
+                    }
+                    else if(j+2>=TextEntry.getText().length() && i+2>format.get(actualTextDisplay).length()){
+                        format.set(actualTextDisplay, format.get(actualTextDisplay) + TextEntry.getText().charAt(TextEntry.getText().length()-1));
+                        found = true;
+                    }
+                    else if(format.get(actualTextDisplay).charAt(i) != (TextEntry.getText().charAt(j))) {
+                        if (format.get(actualTextDisplay).charAt(i + 1) == TextEntry.getText().charAt(j)) {
+                            String temporary;
+                            temporary = format.get(actualTextDisplay).substring(0, i);
+                            temporary += format.get(actualTextDisplay).substring(i + 1);
+                            format.set(actualTextDisplay, temporary);
+                            found = true;
+                        }
+                        if(format.get(actualTextDisplay).charAt(i) == TextEntry.getText().charAt(j+1)){
+                            String temporary = format.get(actualTextDisplay).substring(0, i);
+                            temporary += TextEntry.getText().charAt(j);
+                            temporary += format.get(actualTextDisplay).substring(i);
+                            format.set(actualTextDisplay, temporary);
+                            found = true;
+                        }
+                    }
+                    for(int idx = 0; idx < format.get(actualTextDisplay).length(); idx++){
+                        if(format.get(actualTextDisplay).charAt(idx) == '£' || format.get(actualTextDisplay).charAt(idx) == 'µ'){
+                            if(format.get(actualTextDisplay).charAt(idx+1) == '§'){
+                                String temporary;
+                                temporary = format.get(actualTextDisplay).substring(0, i);
+                                temporary = format.get(actualTextDisplay).substring(i+1);
+                                format.set(actualTextDisplay, temporary);
+                                i--;
+                            }
+                        }
+                    }
+                    i++;
+                    j++;
+                }
+            }
+            actualFormat.setCorrectTextFormat(format);
+            actualFormat.convertToCode();
+            XMLText.setText(actualFormat.getCodeTextFormat());
+        }
     }
 
     private void ChangeDisplayedText(String direction){
         if(!actualFormat.getCorrectTextFormat().isEmpty()){
             if(direction.equals("NEXT") && actualTextDisplay < actualFormat.getCorrectTextFormat().size()-1){
                 actualTextDisplay++;
-                TextEntry.setText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
+                TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
                 NameEntry.setText(actualFormat.getSpeakerName());
             }
             if(direction.equals("PREVIOUS") && actualTextDisplay > 0){
                 actualTextDisplay--;
-                TextEntry.setText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
+                TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
                 NameEntry.setText(actualFormat.getSpeakerName());
             }
             ChangeButtonEnable();
         }
     }
 
-    private void displaySourceForId(String id) {
+    private void displayForId(String id, String toDisplay) {
         if (selectedDirectory != null) {
             String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
             if (filePath.toLowerCase().endsWith(".xml")) {
@@ -171,16 +238,24 @@ public class HelloController {
                             if (node.getNodeType() == Node.ELEMENT_NODE) {
                                 Element element = (Element) node;
                                 if (element.hasAttribute("id") && element.getAttribute("id").equals(id)) {
-                                    NodeList sourceList = element.getElementsByTagName("source");
+                                    NodeList sourceList = element.getElementsByTagName(toDisplay);
                                     if (sourceList.getLength() > 0) {
                                         actualTextDisplay = 0;
                                         Node sourceNode = sourceList.item(0);
                                         XMLText.setText(sourceNode.getTextContent());
                                         Format format = new Format(sourceNode.getTextContent());
                                         actualFormat = format;
-                                        TextEntry.setText(format.getCorrectTextFormat().get(0));
-                                        NameEntry.setText(format.getSpeakerName());
+                                        TextEntry.replaceText(format.getCorrectTextFormat().get(0));
+                                        TextEntry.setDisable(false);
+                                        if(format.getSpeakerName() == null){
+                                            NameEntry.setDisable(true);
+                                        }
+                                        else{
+                                            NameEntry.setDisable(false);
+                                            NameEntry.setText(format.getSpeakerName());
+                                        }
                                         ChangeButtonEnable();
+                                        applyColor();
                                         return;
                                     }
                                 }
@@ -231,8 +306,10 @@ public class HelloController {
     }
 
     private void SelectAndLoadFolder() {
-        selectedDirectory = directoryChooser.showDialog(FolderButton.getScene().getWindow());
-        if (selectedDirectory != null) {
+        directoryChooser.setInitialDirectory(selectedDirectory);
+        File temporaryDirectory = directoryChooser.showDialog(FolderButton.getScene().getWindow());
+        if(temporaryDirectory != null && temporaryDirectory != selectedDirectory) {
+            selectedDirectory = temporaryDirectory;
             TreeItem<String> rootItem = new TreeItem<>(selectedDirectory.getAbsolutePath());
             rootItem.setExpanded(true);
             populateTreeView(selectedDirectory, rootItem);
@@ -297,23 +374,82 @@ public class HelloController {
         return false;
     }
 
-    private void changeTextColor(Color color) {
-        textArea.setStyle("-fx-text-fill: " + toRgbString(color) + ";");
+    private void applyColor() {
+        String text = TextEntry.getText();
+        boolean isRED = false;
+        if(text.contains("£") || text.contains("µ")){
+            for (int i = 0; i < text.length(); i++) {
+                isRED = text.charAt(i) == '£' || (text.charAt(i) != 'µ' && isRED);
+                if(text.charAt(i) == '£' || text.charAt(i) == 'µ') {
+                    int start = i;
+                    TextEntry.replaceText(i, i+1, "");
+                    text = TextEntry.getText();
+                    while (i < text.length() && text.charAt(i) != '§') {
+                        i++;
+                    }
+                    int end = i;
+                    TextEntry.replaceText(i, i+1, "");
+                    text = TextEntry.getText();
+                    if(isRED){
+                        TextEntry.setStyle(start, end,"-fx-fill: red");
+                    }
+                    else{
+                        TextEntry.setStyle(start, end,"-fx-fill: blue");
+                    }
+                }
+            }
+        }
+        else{
+            TextEntry.setStyle(0, text.length(), "-fx-fill: black");
+        }
     }
 
-    private void displayTranslatedText() {
-        textArea.setText("Translated text");
+    private void changeTextColor(String colorSymbol, String colorName) {
+        String actual = actualFormat.getCorrectTextFormat().get(actualTextDisplay);
+        int selectionStart = TextEntry.getSelection().getStart();
+        int selectionEnd = TextEntry.getSelection().getEnd();
+
+        String debut = actual.substring(0, adjustPosition(actual, selectionStart));
+        String milieu = actual.substring(adjustPosition(actual, selectionStart), adjustPosition(actual, selectionEnd));
+        milieu = milieu.replace("£", "");
+        milieu = milieu.replace("§", "");
+        milieu = milieu.replace("µ", "");
+        String fin = actual.substring(adjustPosition(actual, selectionEnd));
+        if(!fin.isEmpty()){
+            if (fin.charAt(0) == '£' || fin.charAt(0) == '§' || fin.charAt(0) == 'µ') {
+                fin = fin.substring(1);
+            }
+        }
+
+        if(colorSymbol.equals("§")){
+            actualFormat.getCorrectTextFormat().set(actualTextDisplay, debut + milieu + fin);
+        }
+        else{
+            actualFormat.getCorrectTextFormat().set(actualTextDisplay, debut + colorSymbol + milieu + "§" + fin);
+        }
+        actualFormat.convertToCode();
+        XMLText.setText(actualFormat.getCodeTextFormat());
+        TextEntry.setStyle(selectionStart, selectionEnd, "-fx-fill: " + colorName);
     }
 
-    private void displayOriginalText() {
-        textArea.setText("Original text");
+    private int adjustPosition(String text, int position){
+        int cpt = 0;
+        for(int i = 0; i < position; i++){
+            if(text.charAt(i) == '£' || text.charAt(i) == '§' || text.charAt(i) == 'µ'){
+                cpt++;
+            }
+        }
+        return position + cpt;
     }
 
-    private String toRgbString(Color color) {
-        int red = (int) (color.getRed() * 255);
-        int green = (int) (color.getGreen() * 255);
-        int blue = (int) (color.getBlue() * 255);
-        return String.format("rgb(%d, %d, %d)", red, green, blue);
+    private void displaySource() {
+        toDisplay = "source";
+        displayForId(actualID, toDisplay);
+    }
+
+    private void displayTarget() {
+        toDisplay = "target";
+        displayForId(actualID, toDisplay);
     }
 
     private String buildFilePath(TreeItem<String> item) {
