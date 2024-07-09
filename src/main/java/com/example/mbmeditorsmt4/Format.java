@@ -53,6 +53,16 @@ public class Format {
         TextFormat = TextFormat.replace("{F801}{F802}", "(NewDialogBox)");
         TextFormat = TextFormat.replace("{F801}", "\n");
         TextFormat = TextFormat.replace("{F843,0}", "(Protag)");
+        TextFormat = TextFormat.replace("{F873,1}", "(Demon)");
+        TextFormat = TextFormat.replace("{F873,2}", "(Demon2)");
+        TextFormat = TextFormat.replace("{F875,1}", "(Race)");
+        TextFormat = TextFormat.replace("{F877,1}", "(Skill)");
+        TextFormat = TextFormat.replace("{F877,2}", "(Skill2)");
+        TextFormat = TextFormat.replace("{F872,1}", "(Object)");
+        TextFormat = TextFormat.replace("{F878,1}", "(Quantity)");
+        TextFormat = TextFormat.replace("{F87D,14}", "(Attack Type)");
+        TextFormat = TextFormat.replace("{F87D,15}", "(Target Type)");
+        TextFormat = TextFormat.replace("{F873,6}", "(Ally)");
         TextFormat = TextFormat.replace("{F804,5}", "£");//red
         TextFormat = TextFormat.replace("{F804,1}", "µ");//blue
         TextFormat = TextFormat.replace("{F804,0}", "§");//black
@@ -96,7 +106,7 @@ public class Format {
             idx = codeTextFormat.indexOf("\\0")+2;
         }
         for(int i = 0; i < correctTextFormat.size(); i++){
-            if(codeTextFormat.charAt(idx) == '{' && !codeTextFormat.startsWith("{F801}")){
+            if(codeTextFormat.charAt(idx) == '{' && !codeTextFormat.startsWith("{F801}") && idx != 0){
                 while(codeTextFormat.charAt(idx) != '}'){
                     TextFormat = TextFormat + codeTextFormat.charAt(idx);
                     idx++;
@@ -111,16 +121,35 @@ public class Format {
                 }
             TextFormat = TextFormat + "}";
             }
+//            else if(codeTextFormat.startsWith("{F871,1}")){
+//                TextFormat += "{F871,1}";
+//            }
             TextFormat = TextFormat + correctTextFormat.get(i).replace("\n", "{F801}");
             if(i<correctTextFormat.size()-1){
                 String temporary = codeTextFormat.substring(idx);
                 idx = idx + temporary.indexOf("{F801}{F802}");
             }
         }
+
         TextFormat = TextFormat.replace("(Protag)", "{F843,0}");
+        TextFormat = TextFormat.replace("(Demon)", "{F873,1}");
+        TextFormat = TextFormat.replace("(Demon2)", "{F873,2}");
+        TextFormat = TextFormat.replace("(Race)", "{F875,1}");
+        TextFormat = TextFormat.replace("(Skill)", "{F877,1}");
+        TextFormat = TextFormat.replace("(Skill2)", "{F877,2}");
+        TextFormat = TextFormat.replace("(Object)", "{F872,1}");
+        TextFormat = TextFormat.replace("(Quantity)", "{F878,1}");
+        TextFormat = TextFormat.replace("(Attack Type)", "{F87D,14}");
+        TextFormat = TextFormat.replace("(Target Type)", "{F87D,15}");
+        TextFormat = TextFormat.replace("(Ally)", "{F873,6}");
         TextFormat = TextFormat.replace("£", "{F804,5}");//red
         TextFormat = TextFormat.replace("µ", "{F804,1}");//blue
         TextFormat = TextFormat.replace("§", "{F804,0}");//black
-        codeTextFormat = name + TextFormat + "{F801}";
+        if(codeTextFormat.endsWith("{F802}")){
+            codeTextFormat = name + TextFormat + "{F801}" + "{F802}";
+        }
+        else{
+            codeTextFormat = name + TextFormat + "{F801}";
+        }
     }
 }

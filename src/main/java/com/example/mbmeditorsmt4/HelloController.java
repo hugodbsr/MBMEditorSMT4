@@ -13,18 +13,17 @@ import org.fxmisc.richtext.InlineCssTextArea;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class HelloController {
-    @FXML
-    private Label welcomeText;
-
-    @FXML
-    private TextArea textArea;
-
     @FXML
     private Button redButton;
 
@@ -35,10 +34,10 @@ public class HelloController {
     private Button blueButton;
 
     @FXML
-    private Button afficherTexteTraduitButton;
+    private Button SourceButton;
 
     @FXML
-    private Button afficherTexteDorigineButton;
+    private Button OriginButton;
 
     @FXML
     private TreeView<String> FolderView;
@@ -70,6 +69,9 @@ public class HelloController {
     @FXML
     private Button NextText;
 
+    @FXML
+    private Button SaveIDButton;
+
     DirectoryChooser directoryChooser = new DirectoryChooser();
     private File selectedDirectory;
     private final HashMap<String, String> fileLocations = new HashMap<>();
@@ -83,8 +85,9 @@ public class HelloController {
         redButton.setOnAction(event -> changeTextColor("£", "red"));
         blackButton.setOnAction(event -> changeTextColor("§", "black"));
         blueButton.setOnAction(event -> changeTextColor("µ", "blue"));
-        afficherTexteTraduitButton.setOnAction(event -> displaySource());
-        afficherTexteDorigineButton.setOnAction(event -> displayTarget());
+        SourceButton.setOnAction(event -> displaySource());
+        OriginButton.setOnAction(event -> displayTarget());
+        SaveIDButton.setOnAction(event -> SaveActualID());
 
         PreviousText.setOnAction(event -> ChangeDisplayedText("PREVIOUS"));
         NextText.setOnAction(event -> ChangeDisplayedText("NEXT"));
@@ -122,6 +125,67 @@ public class HelloController {
         });
     }
 
+    private void SaveActualID() {
+        if (actualID == null || actualID.isEmpty()) {
+            ErrorLabel.setText("No ID selected to save");
+            return;
+        }
+
+        String textContent = actualFormat.getCodeTextFormat();
+        String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
+
+        if (!filePath.toLowerCase().endsWith(".xml")) {
+            ErrorLabel.setText("No valid XML file selected");
+            return;
+        }
+
+        File xmlFile = new File(filePath);
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(xmlFile);
+            doc.getDocumentElement().normalize();
+
+            NodeList entryList = doc.getElementsByTagName("entry");
+            boolean idFound = false;
+
+            for (int i = 0; i < entryList.getLength(); i++) {
+                Node node = entryList.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+                    if (actualID.equals(element.getAttribute("id"))) {
+                        NodeList sourceList = element.getElementsByTagName(toDisplay);
+                        if (sourceList.getLength() > 0) {
+                            sourceList.item(0).setTextContent(textContent);
+                        } else {
+                            Element newElement = doc.createElement(toDisplay);
+                            newElement.setTextContent(textContent);
+                            element.appendChild(newElement);
+                        }
+                        idFound = true;
+                        break;
+                    }
+                }
+            }
+
+            if (idFound) {
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                DOMSource source = new DOMSource(doc);
+                StreamResult result = new StreamResult(xmlFile);
+                transformer.transform(source, result);
+                ErrorLabel.setText("ID saved successfully!");
+            } else {
+                ErrorLabel.setText("ID not found in the XML file");
+            }
+
+        } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
+            ErrorLabel.setText("Error saving ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void ChangeButtonEnable(){
         if(actualFormat == null || actualFormat.getCorrectTextFormat().isEmpty()){
             NextText.setDisable(true);
@@ -152,8 +216,12 @@ public class HelloController {
                 int i = 0;
                 int j = 0;
                 boolean found = false;
+                String actualNoBalises = format.get(actualTextDisplay);
+                actualNoBalises = actualNoBalises.replaceAll("µ", "");
+                actualNoBalises = actualNoBalises.replaceAll("£", "");
+                actualNoBalises = actualNoBalises.replaceAll("§", "");
                 while(i < format.get(actualTextDisplay).length() && !found){
-                    if(format.get(actualTextDisplay).charAt(i) == '£' || format.get(actualTextDisplay).charAt(i) == 'µ' || format.get(actualTextDisplay).charAt(i) == '§'){
+                    if(format.get(actualTextDisplay).charAt(i) == '§' || format.get(actualTextDisplay).charAt(i) == '£' || format.get(actualTextDisplay).charAt(i) == 'µ'){
                         i++;
                     }
                     if(j>=TextEntry.getText().length() && i<format.get(actualTextDisplay).length()){
@@ -164,15 +232,15 @@ public class HelloController {
                         format.set(actualTextDisplay, format.get(actualTextDisplay) + TextEntry.getText().charAt(TextEntry.getText().length()-1));
                         found = true;
                     }
-                    else if(format.get(actualTextDisplay).charAt(i) != (TextEntry.getText().charAt(j))) {
-                        if (format.get(actualTextDisplay).charAt(i + 1) == TextEntry.getText().charAt(j)) {
+                    else if(actualNoBalises.charAt(j) != (TextEntry.getText().charAt(j))) {
+                        if (actualNoBalises.substring(j+1).equals(TextEntry.getText().substring(j))) {//Character deletion
                             String temporary;
                             temporary = format.get(actualTextDisplay).substring(0, i);
                             temporary += format.get(actualTextDisplay).substring(i + 1);
                             format.set(actualTextDisplay, temporary);
                             found = true;
                         }
-                        if(format.get(actualTextDisplay).charAt(i) == TextEntry.getText().charAt(j+1)){
+                        if(actualNoBalises.substring(j).equals(TextEntry.getText().substring(j+1))){//Character addition
                             String temporary = format.get(actualTextDisplay).substring(0, i);
                             temporary += TextEntry.getText().charAt(j);
                             temporary += format.get(actualTextDisplay).substring(i);
@@ -213,6 +281,7 @@ public class HelloController {
                 TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
                 NameEntry.setText(actualFormat.getSpeakerName());
             }
+            applyColor();
             ChangeButtonEnable();
         }
     }
@@ -249,6 +318,7 @@ public class HelloController {
                                         TextEntry.setDisable(false);
                                         if(format.getSpeakerName() == null){
                                             NameEntry.setDisable(true);
+                                            NameEntry.clear();
                                         }
                                         else{
                                             NameEntry.setDisable(false);

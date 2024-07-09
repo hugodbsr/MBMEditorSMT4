@@ -70,8 +70,9 @@
                                 <Button fx:id="redButton" mnemonicParsing="false" prefHeight="22.0" prefWidth="38.0" text="RED" />
                                 <Button fx:id="blackButton" mnemonicParsing="false" prefHeight="17.0" prefWidth="52.0" text="BLACK" />
                                 <Button fx:id="blueButton" mnemonicParsing="false" prefHeight="18.0" prefWidth="43.0" text="BLUE" />
-                                <Button fx:id="afficherTexteTraduitButton" mnemonicParsing="false" prefHeight="13.0" prefWidth="133.0" text="Afficher Texte Traduit" />
-                                <Button fx:id="afficherTexteDorigineButton" mnemonicParsing="false" prefHeight="3.0" prefWidth="140.0" text="Afficher Texte d'origine" />
+                                <Button fx:id="SourceButton" mnemonicParsing="false" prefHeight="13.0" prefWidth="115.0" text="Display edited text" />
+                                <Button fx:id="OriginButton" mnemonicParsing="false" prefHeight="3.0" prefWidth="125.0" text="Display original text" />
+                                <Button fx:id="SaveIDButton" mnemonicParsing="false" prefHeight="3.0" prefWidth="80.0" text="Save this ID" />
                             </items>
                         </ToolBar>
                         <HBox prefHeight="27.0" prefWidth="331.0">
@@ -125,7 +126,7 @@
          <bottom>
             <HBox prefHeight="0.0" prefWidth="890.0" BorderPane.alignment="CENTER">
                <children>
-                  <Label prefHeight="4.0" prefWidth="48.0" text="Error:">
+                  <Label prefHeight="4.0" prefWidth="48.0" text="Info:">
                      <font>
                         <Font size="16.0" />
                      </font>
