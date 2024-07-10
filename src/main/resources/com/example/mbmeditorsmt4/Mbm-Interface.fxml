@@ -61,7 +61,7 @@
             <right>
                 <VBox prefHeight="468.0" prefWidth="553.0" BorderPane.alignment="CENTER">
                     <children>
-                  <TextArea fx:id="XMLText" editable="false" prefHeight="196.0" prefWidth="435.0" wrapText="true">
+                  <TextArea fx:id="XMLText" editable="false" prefHeight="196.0" prefWidth="435.0" wrapText="true" >
                      <font>
                         <Font name="Consolas" size="18.0" />
                      </font></TextArea>
@@ -72,7 +72,8 @@
                                 <Button fx:id="blueButton" mnemonicParsing="false" prefHeight="18.0" prefWidth="43.0" text="BLUE" />
                                 <Button fx:id="SourceButton" mnemonicParsing="false" prefHeight="13.0" prefWidth="115.0" text="Display edited text" />
                                 <Button fx:id="OriginButton" mnemonicParsing="false" prefHeight="3.0" prefWidth="125.0" text="Display original text" />
-                                <Button fx:id="SaveIDButton" mnemonicParsing="false" prefHeight="3.0" prefWidth="80.0" text="Save this ID" />
+                                <Button fx:id="SaveIDButton" mnemonicParsing="false" prefHeight="3.0" prefWidth="60.0" text="Save ID" />
+                                <Button fx:id="ResetID" mnemonicParsing="false" prefHeight="3.0" prefWidth="60.0" text="Reset ID" />
                             </items>
                         </ToolBar>
                         <HBox prefHeight="27.0" prefWidth="331.0">

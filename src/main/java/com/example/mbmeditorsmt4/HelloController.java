@@ -72,6 +72,9 @@ public class HelloController {
     @FXML
     private Button SaveIDButton;
 
+    @FXML
+    private Button ResetID;
+
     DirectoryChooser directoryChooser = new DirectoryChooser();
     private File selectedDirectory;
     private final HashMap<String, String> fileLocations = new HashMap<>();
@@ -88,6 +91,7 @@ public class HelloController {
         SourceButton.setOnAction(event -> displaySource());
         OriginButton.setOnAction(event -> displayTarget());
         SaveIDButton.setOnAction(event -> SaveActualID());
+        ResetID.setOnAction(event -> displayForId(actualID, toDisplay));
 
         PreviousText.setOnAction(event -> ChangeDisplayedText("PREVIOUS"));
         NextText.setOnAction(event -> ChangeDisplayedText("NEXT"));
@@ -200,72 +204,25 @@ public class HelloController {
         }
     }
 
-    private void updateTextEntry(){
+    private void updateTextEntry() {
         if (TextEntry.getCurrentParagraph() > 2) {
             TextEntry.deletePreviousChar();
             ErrorLabel.setText("Cannot create a new line");
         } else {
             ErrorLabel.setText("");
         }
-        if(!actualFormat.getCorrectTextFormat().get(actualTextDisplay).equals(TextEntry.getText())){
-            ArrayList<String> format = actualFormat.getCorrectTextFormat();
-            if(format.get(actualTextDisplay).isEmpty()){
-                format.set(actualTextDisplay, TextEntry.getText());
-            }
-            else{
-                int i = 0;
-                int j = 0;
-                boolean found = false;
-                String actualNoBalises = format.get(actualTextDisplay);
-                actualNoBalises = actualNoBalises.replaceAll("µ", "");
-                actualNoBalises = actualNoBalises.replaceAll("£", "");
-                actualNoBalises = actualNoBalises.replaceAll("§", "");
-                while(i < format.get(actualTextDisplay).length() && !found){
-                    if(format.get(actualTextDisplay).charAt(i) == '§' || format.get(actualTextDisplay).charAt(i) == '£' || format.get(actualTextDisplay).charAt(i) == 'µ'){
-                        i++;
-                    }
-                    if(j>=TextEntry.getText().length() && i<format.get(actualTextDisplay).length()){
-                        format.set(actualTextDisplay, format.get(actualTextDisplay).substring(0, i));
-                        found = true;
-                    }
-                    else if(j+2>=TextEntry.getText().length() && i+2>format.get(actualTextDisplay).length()){
-                        format.set(actualTextDisplay, format.get(actualTextDisplay) + TextEntry.getText().charAt(TextEntry.getText().length()-1));
-                        found = true;
-                    }
-                    else if(actualNoBalises.charAt(j) != (TextEntry.getText().charAt(j))) {
-                        if (actualNoBalises.substring(j+1).equals(TextEntry.getText().substring(j))) {//Character deletion
-                            String temporary;
-                            temporary = format.get(actualTextDisplay).substring(0, i);
-                            temporary += format.get(actualTextDisplay).substring(i + 1);
-                            format.set(actualTextDisplay, temporary);
-                            found = true;
-                        }
-                        if(actualNoBalises.substring(j).equals(TextEntry.getText().substring(j+1))){//Character addition
-                            String temporary = format.get(actualTextDisplay).substring(0, i);
-                            temporary += TextEntry.getText().charAt(j);
-                            temporary += format.get(actualTextDisplay).substring(i);
-                            format.set(actualTextDisplay, temporary);
-                            found = true;
-                        }
-                    }
-                    for(int idx = 0; idx < format.get(actualTextDisplay).length(); idx++){
-                        if(format.get(actualTextDisplay).charAt(idx) == '£' || format.get(actualTextDisplay).charAt(idx) == 'µ'){
-                            if(format.get(actualTextDisplay).charAt(idx+1) == '§'){
-                                String temporary;
-                                temporary = format.get(actualTextDisplay).substring(0, i);
-                                temporary = format.get(actualTextDisplay).substring(i+1);
-                                format.set(actualTextDisplay, temporary);
-                                i--;
-                            }
-                        }
-                    }
-                    i++;
-                    j++;
-                }
-            }
+
+        ArrayList<String> format = actualFormat.getCorrectTextFormat();
+        String actualTextFormat = format.get(actualTextDisplay);
+        String currenTextEntry = TextEntry.getText();
+
+        if (!currenTextEntry.equals(actualTextFormat)) {
+            format.set(actualTextDisplay, currenTextEntry);
+
             actualFormat.setCorrectTextFormat(format);
             actualFormat.convertToCode();
             XMLText.setText(actualFormat.getCodeTextFormat());
+            applyColor();
         }
     }
 
@@ -307,22 +264,31 @@ public class HelloController {
                             if (node.getNodeType() == Node.ELEMENT_NODE) {
                                 Element element = (Element) node;
                                 if (element.hasAttribute("id") && element.getAttribute("id").equals(id)) {
-                                    NodeList sourceList = element.getElementsByTagName(toDisplay);
+                                    NodeList sourceList = element.getElementsByTagName("source");
+                                    NodeList targetList = element.getElementsByTagName("target");
                                     if (sourceList.getLength() > 0) {
                                         actualTextDisplay = 0;
                                         Node sourceNode = sourceList.item(0);
-                                        XMLText.setText(sourceNode.getTextContent());
-                                        Format format = new Format(sourceNode.getTextContent());
-                                        actualFormat = format;
-                                        TextEntry.replaceText(format.getCorrectTextFormat().get(0));
-                                        TextEntry.setDisable(false);
-                                        if(format.getSpeakerName() == null){
+                                        Node targetNode = targetList.item(0);
+                                        actualFormat = new Format(sourceNode.getTextContent(), targetNode.getTextContent());
+                                        if(toDisplay.equals("source")){
+                                            XMLText.setText(sourceNode.getTextContent());
+                                            TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(0));
+                                            TextEntry.setDisable(false);
+                                        }
+                                        else{
+                                            XMLText.setText(targetNode.getTextContent());
+                                            TextEntry.replaceText(actualFormat.getORIGINALcorrectTextFormat().get(0));
+                                            TextEntry.setDisable(true);
+                                        }
+
+                                        if(actualFormat.getSpeakerName() == null){
                                             NameEntry.setDisable(true);
                                             NameEntry.clear();
                                         }
                                         else{
                                             NameEntry.setDisable(false);
-                                            NameEntry.setText(format.getSpeakerName());
+                                            NameEntry.setText(actualFormat.getSpeakerName());
                                         }
                                         ChangeButtonEnable();
                                         applyColor();
@@ -514,12 +480,16 @@ public class HelloController {
 
     private void displaySource() {
         toDisplay = "source";
-        displayForId(actualID, toDisplay);
+        TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay).replaceAll("[§µ£]", ""));
+        XMLText.setText(actualFormat.getCodeTextFormat());
+        TextEntry.setDisable(false);
     }
 
     private void displayTarget() {
         toDisplay = "target";
-        displayForId(actualID, toDisplay);
+        TextEntry.replaceText(actualFormat.getORIGINALcorrectTextFormat().get(actualTextDisplay).replaceAll("[§µ£]", ""));
+        XMLText.setText(actualFormat.getORIGINALcodeTextFormat());
+        TextEntry.setDisable(true);
     }
 
     private String buildFilePath(TreeItem<String> item) {

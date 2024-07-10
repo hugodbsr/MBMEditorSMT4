@@ -6,13 +6,19 @@ import java.util.ArrayList;
 
 public class Format {
     private String codeTextFormat;
+    private String ORIGINALcodeTextFormat;
     private String speakerName;
+    private String ORIGINALspeakerName;
     private ArrayList<String> correctTextFormat;
+    private ArrayList<String> ORIGINALcorrectTextFormat;
 
-    public Format(String codeTextFormat) {
+    public Format(String codeTextFormat, String ORIGINALcodeTextFormat) {
+        this.ORIGINALcodeTextFormat = ORIGINALcodeTextFormat;
         this.codeTextFormat = codeTextFormat;
         this.correctTextFormat = new ArrayList<>();
-        formatText();
+        this.ORIGINALcorrectTextFormat = new ArrayList<>();
+        formatText(codeTextFormat, correctTextFormat, speakerName);
+        formatText(ORIGINALcodeTextFormat, ORIGINALcorrectTextFormat, ORIGINALspeakerName);
     }
 
     public String getCodeTextFormat() {
@@ -27,9 +33,21 @@ public class Format {
         return speakerName;
     }
 
+    public ArrayList<String> getORIGINALcorrectTextFormat() {
+        return ORIGINALcorrectTextFormat;
+    }
+
+    public String getORIGINALcodeTextFormat() {
+        return ORIGINALcodeTextFormat;
+    }
+
+    public String getORIGINALspeakerName() {
+        return ORIGINALspeakerName;
+    }
+
     public void setCodeTextFormat(String codeTextFormat) {
         this.codeTextFormat = codeTextFormat;
-        formatText();
+        formatText(codeTextFormat, correctTextFormat, speakerName);
     }
 
     public void setCorrectTextFormat(ArrayList<String> correctTextFormat) {
@@ -40,9 +58,8 @@ public class Format {
         this.speakerName = speakerName;
     }
 
-    private void formatText() {
+    private void formatText(String codeTextFormat, ArrayList<String> correctTextFormat, String name) {
         if (codeTextFormat == null || codeTextFormat.length() < 7) {
-            String TextFormat = codeTextFormat;
             return;
         }
 
@@ -71,28 +88,28 @@ public class Format {
         if (TextFormat.startsWith("{F812}")) {
             int endIdx = TextFormat.indexOf("\\0");
             if (endIdx != -1) {
-                speakerName = TextFormat.substring(6, endIdx);
+                name = TextFormat.substring(6, endIdx);
                 TextFormat = TextFormat.replace("{F812}", "");
-                TextFormat = TextFormat.replace(speakerName, "");
+                TextFormat = TextFormat.replace(name, "");
                 TextFormat = TextFormat.replace("\\0", "");
                 TextFormat = TextFormat.replace("{F87A,0}", "");
                 TextFormat = TextFormat.replaceAll("\\{F87A,\\d+\\}", "");
                 TextFormat = TextFormat.replaceAll("\\{F87B,\\d+,\\d+,\\d+,\\d+\\}", "");
                 TextFormat = TextFormat.replaceAll("\\{F813,\\d+,\\d+\\}", "");
             } else {
-                speakerName = "";
+                name = "";
             }
         }
-        addToList(TextFormat);
+        addToList(TextFormat, correctTextFormat);
     }
 
-    private void addToList(String TextFormat) {
-        if (correctTextFormat == null) {
-            correctTextFormat = new ArrayList<>();
+    private void addToList(String TextFormat, ArrayList<String> list) {
+        if (list == null) {
+            list = new ArrayList<>();
         }
         String[] parts = TextFormat.split("\\(NewDialogBox\\)");
         for(String part : parts){
-            correctTextFormat.add(part.trim());
+            list.add(part.trim());
         }
     }
 
@@ -119,11 +136,11 @@ public class Format {
                         }
                     }
                 }
-            TextFormat = TextFormat + "}";
+                TextFormat = TextFormat + "}";
             }
-//            else if(codeTextFormat.startsWith("{F871,1}")){
-//                TextFormat += "{F871,1}";
-//            }
+            else if(codeTextFormat.startsWith("{F871,1}")){
+                TextFormat += "{F871,1}";
+            }
             TextFormat = TextFormat + correctTextFormat.get(i).replace("\n", "{F801}");
             if(i<correctTextFormat.size()-1){
                 String temporary = codeTextFormat.substring(idx);
