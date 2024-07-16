@@ -7,8 +7,8 @@ import java.util.ArrayList;
 public class Format {
     private String codeTextFormat;
     private String ORIGINALcodeTextFormat;
-    private String speakerName;
-    private String ORIGINALspeakerName;
+    private String[] speakerName;
+    private String[] ORIGINALspeakerName;
     private ArrayList<String> correctTextFormat;
     private ArrayList<String> ORIGINALcorrectTextFormat;
 
@@ -17,6 +17,8 @@ public class Format {
         this.codeTextFormat = codeTextFormat;
         this.correctTextFormat = new ArrayList<>();
         this.ORIGINALcorrectTextFormat = new ArrayList<>();
+        this.speakerName = new String[]{""};
+        this.ORIGINALspeakerName = new String[]{""};
         formatText(codeTextFormat, correctTextFormat, speakerName);
         formatText(ORIGINALcodeTextFormat, ORIGINALcorrectTextFormat, ORIGINALspeakerName);
     }
@@ -30,7 +32,7 @@ public class Format {
     }
 
     public String getSpeakerName() {
-        return speakerName;
+        return speakerName[0];
     }
 
     public ArrayList<String> getORIGINALcorrectTextFormat() {
@@ -42,7 +44,7 @@ public class Format {
     }
 
     public String getORIGINALspeakerName() {
-        return ORIGINALspeakerName;
+        return ORIGINALspeakerName[0];
     }
 
     public void setCodeTextFormat(String codeTextFormat) {
@@ -55,10 +57,10 @@ public class Format {
     }
 
     public void setSpeakerName(String speakerName) {
-        this.speakerName = speakerName;
+        this.speakerName[0] = speakerName;
     }
 
-    private void formatText(String codeTextFormat, ArrayList<String> correctTextFormat, String name) {
+    private void formatText(String codeTextFormat, ArrayList<String> correctTextFormat, String[] name) {
         if (codeTextFormat == null || codeTextFormat.length() < 7) {
             return;
         }
@@ -88,16 +90,17 @@ public class Format {
         if (TextFormat.startsWith("{F812}")) {
             int endIdx = TextFormat.indexOf("\\0");
             if (endIdx != -1) {
-                name = TextFormat.substring(6, endIdx);
+                name[0] = TextFormat.substring(6, endIdx);
                 TextFormat = TextFormat.replace("{F812}", "");
-                TextFormat = TextFormat.replace(name, "");
+                TextFormat = TextFormat.replaceFirst(name[0], "");
                 TextFormat = TextFormat.replace("\\0", "");
                 TextFormat = TextFormat.replace("{F87A,0}", "");
                 TextFormat = TextFormat.replaceAll("\\{F87A,\\d+\\}", "");
                 TextFormat = TextFormat.replaceAll("\\{F87B,\\d+,\\d+,\\d+,\\d+\\}", "");
                 TextFormat = TextFormat.replaceAll("\\{F813,\\d+,\\d+\\}", "");
-            } else {
-                name = "";
+            }
+            else {
+                name[0] = "";
             }
         }
         addToList(TextFormat, correctTextFormat);
@@ -168,5 +171,23 @@ public class Format {
         else{
             codeTextFormat = name + TextFormat + "{F801}";
         }
+    }
+
+    public String toStringCorrect(){
+        String renvoie = "";
+        for(String correct : correctTextFormat){
+            renvoie = renvoie + correct.replace("\n", " ");
+            renvoie = renvoie + "\n\n";
+        }
+        return renvoie;
+    }
+
+    public String toStringCorrectORIGINAL(){
+        String renvoie = "";
+        for(String correct : ORIGINALcorrectTextFormat){
+            renvoie = renvoie + correct.replace("\n", " ");
+            renvoie = renvoie + "\n\n";
+        }
+        return renvoie;
     }
 }

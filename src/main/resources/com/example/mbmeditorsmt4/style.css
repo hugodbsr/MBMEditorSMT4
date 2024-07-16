@@ -10,6 +10,10 @@
     -fx-background-color: transparent;
 }
 
+.textAreaCustomFont .text{
+    -fx-line-spacing: -12px;
+}
+
 .textAreaCustomFont .scroll-pane{
     -fx-hbar-policy: never;
     -fx-vbar-policy: never;
@@ -23,6 +27,13 @@
     -fx-text-fill: white;
 }
 
-.textAreaCustomFont .text{
+.tutorialText{
+    -fx-font-family: 'Overpass', sans-serif;
+    -fx-font-size: 19px;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+.tutorialText .text{
     -fx-line-spacing: -12px;
 }
