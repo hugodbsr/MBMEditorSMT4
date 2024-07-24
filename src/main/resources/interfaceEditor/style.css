@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'Overpass';
-    src: url('./overpass-bold.ttf');
+    src: url('overpass-bold.ttf');
 }
 
 .textAreaCustomFont {

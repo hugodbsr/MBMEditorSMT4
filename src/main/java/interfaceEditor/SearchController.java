@@ -1,4 +1,4 @@
-package com.example.mbmeditorsmt4;
+package interfaceEditor;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -21,18 +21,23 @@ public class SearchController {
     @FXML
     protected void initialize() {
         TagType.getItems().addAll("Source", "Target", "All");
-        LaunchSearch.setOnAction((ActionEvent event) -> {
-            if(TagType.getValue() != null && WordSearch.getLength() != 0) {
-                mainController.setErrorLabel("");
-                mainController.setTextSearch(WordSearch.getText());
-                mainController.setTagSearch(TagType.getValue());
-                mainController.LoadFolder();
-                ((Stage)LaunchSearch.getScene().getWindow()).close();
-            }
-            else{
-                mainController.setErrorLabel("Please select a tag & text.");
-            }
-        });
+        LaunchSearch.setOnAction(this::handleSearchAction);
+    }
+
+    private void handleSearchAction(ActionEvent event) {
+        if (TagType.getValue() != null && !WordSearch.getText().isEmpty()) {
+            mainController.setErrorLabel("");
+            mainController.setTextSearch(WordSearch.getText());
+            mainController.setTagSearch(TagType.getValue());
+            mainController.LoadFolder();
+            closeWindow();
+        } else {
+            mainController.setErrorLabel("Please select a tag & text.");
+        }
+    }
+
+    private void closeWindow() {
+        ((Stage) LaunchSearch.getScene().getWindow()).close();
     }
 
     public void setTagType(String tagType) {

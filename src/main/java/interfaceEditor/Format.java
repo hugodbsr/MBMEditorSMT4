@@ -1,6 +1,4 @@
-package com.example.mbmeditorsmt4;
-
-import org.w3c.dom.Text;
+package interfaceEditor;
 
 import java.util.ArrayList;
 
@@ -41,15 +39,6 @@ public class Format {
 
     public String getORIGINALcodeTextFormat() {
         return ORIGINALcodeTextFormat;
-    }
-
-    public String getORIGINALspeakerName() {
-        return ORIGINALspeakerName[0];
-    }
-
-    public void setCodeTextFormat(String codeTextFormat) {
-        this.codeTextFormat = codeTextFormat;
-        formatText(codeTextFormat, correctTextFormat, speakerName);
     }
 
     public void setCorrectTextFormat(ArrayList<String> correctTextFormat) {

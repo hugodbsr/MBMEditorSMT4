@@ -7,6 +7,6 @@ module com.example.mbmeditorsmt4 {
     requires java.net.http;
 
 
-    opens com.example.mbmeditorsmt4 to javafx.fxml;
-    exports com.example.mbmeditorsmt4;
+    opens interfaceEditor to javafx.fxml;
+    exports interfaceEditor;
 }

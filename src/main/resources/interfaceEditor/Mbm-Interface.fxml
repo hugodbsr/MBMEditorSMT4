@@ -22,7 +22,7 @@
 <?import org.fxmisc.richtext.InlineCssTextArea?>
 
 <?import javafx.scene.control.MenuButton?>
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="519.0" prefWidth="1018.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.mbmeditorsmt4.MainController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="519.0" prefWidth="1018.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="interfaceEditor.MainController">
     <children>
         <BorderPane prefHeight="518.0" prefWidth="1018.0">
             <top>
@@ -35,7 +35,7 @@
                         </Menu>
                         <Menu mnemonicParsing="false" text="Preferences">
                             <items>
-                                <MenuItem mnemonicParsing="false" text="Parameter" />
+                                <MenuItem fx:id="ParameterButton" mnemonicParsing="false" text="Parameter" />
                             </items>
                         </Menu>
                         <Menu mnemonicParsing="false" text="Search Tool">
@@ -44,9 +44,10 @@
                                 <MenuItem fx:id="Search2" mnemonicParsing="false" text="Reset Search" />
                             </items>
                         </Menu>
-                        <Menu mnemonicParsing="false" text="Save Modifications">
+                        <Menu mnemonicParsing="false" text="Apply Modifications">
                             <items>
-                                <MenuItem mnemonicParsing="false" text="Save ID" />
+                                <MenuItem fx:id="ApplyID" mnemonicParsing="false" text="Apply for this ID" />
+                                <MenuItem fx:id="ApplyWhole" mnemonicParsing="false" text="Apply for Whole File" />
                             </items>
                         </Menu>
                         <Menu mnemonicParsing="false" text="Copy Tool">

@@ -1,36 +1,23 @@
-package com.example.mbmeditorsmt4;
+package interfaceEditor;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.Stage;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import javafx.scene.image.*;
+import javafx.scene.input.*;
+import javafx.stage.*;
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 import org.fxmisc.richtext.InlineCssTextArea;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.*;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
+import java.io.*;
+import java.util.*;
 
 public class MainController {
     @FXML
@@ -123,6 +110,15 @@ public class MainController {
     @FXML
     private MenuItem CopyWholeTarget;
 
+    @FXML
+    private MenuItem ParameterButton;
+
+    @FXML
+    private MenuItem ApplyID;
+
+    @FXML
+    private MenuItem ApplyWhole;
+
     DirectoryChooser directoryChooser = new DirectoryChooser();
     private File selectedDirectory;
     private final HashMap<String, String> fileLocations = new HashMap<>();
@@ -141,6 +137,50 @@ public class MainController {
     @FXML
     private void initialize() {
 
+        ApplyID.setOnAction(e->{
+            SaveActualID();
+            copySourceToTarget(actualID);
+            displayForId(actualID, toDisplay);
+        });
+
+        ApplyWhole.setOnAction(e -> {
+            if (selectedDirectory != null) {
+                String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
+                if (filePath.toLowerCase().endsWith(".xml")) {
+                    File selectedFile = new File(filePath);
+                    String relativePath = fileLocations.get(selectedFile.getName());
+                    if (relativePath != null) {
+                        File xmlFile = new File(selectedDirectory, relativePath);
+                        try {
+                            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                            DocumentBuilder builder = factory.newDocumentBuilder();
+                            Document document = builder.parse(xmlFile);
+                            document.getDocumentElement().normalize();
+
+                            NodeList entryList = document.getElementsByTagName("entry");
+                            if(actualID != null){
+                                SaveActualID();
+                            }
+                            for (int i = 0; i < entryList.getLength(); i++) {
+                                Node node = entryList.item(i);
+                                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                                    Element element = (Element) node;
+                                    if (element.hasAttribute("id")) {
+                                        String id = element.getAttribute("id");
+                                        System.out.println(id);
+                                        copySourceToTarget(id);
+                                    }
+                                }
+                            }
+                            displayForId(actualID, toDisplay);
+                        } catch (ParserConfigurationException | SAXException | IOException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                }
+            }
+        });
+
         CopyWholeSource.setOnAction(e->CopyWholeID("source"));
         CopyWholeTarget.setOnAction(e->CopyWholeID("target"));
 
@@ -150,12 +190,14 @@ public class MainController {
             ErrorLabel.setText("Text have been copied to Clipboard");
         });
 
-        Search1.setOnAction(event -> openNewWindow());
+        Search1.setOnAction(event -> openNewWindow("Search-Interface"));
         Search2.setOnAction(event -> {
             textSearch = "";
             tagSearch = "";
             LoadFolder();
         });
+
+        ParameterButton.setOnAction(event -> openNewWindow("Parameter-Interface"));
 
         redButton.setOnAction(event -> changeTextColor("£", "red"));
         blackButton.setOnAction(event -> changeTextColor("§", "black"));
@@ -206,6 +248,7 @@ public class MainController {
                 displayForId(actualID, toDisplay);
             }
         });
+        loadProperties();
     }
 
     public void CopyWholeID(String tag){
@@ -259,39 +302,50 @@ public class MainController {
         }
     }
 
-    public void setErrorLabel(String errorLabel) {
-        ErrorLabel.setText(errorLabel);
-    }
-
-    public void setTextSearch(String textSearch) {
-        this.textSearch = textSearch;
-    }
-
-    public void setTagSearch(String tagSearch) {
-        this.tagSearch = tagSearch;
-    }
-
-    public String getTextSearch() {
-        return textSearch;
-    }
-
-    public String getTagSearch() {
-        return tagSearch;
-    }
-
-    private void openNewWindow() {
+    private void loadProperties() {
+        Properties properties = new Properties();
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Search-Interface.fxml"));
+            File iniFile = new File("settings.ini");
+            FileInputStream inputStream = new FileInputStream(iniFile);
+            properties.load(inputStream);
+            inputStream.close();
+
+            String directoryPath = properties.getProperty("DirectoryPath");
+            if (directoryPath != null && !directoryPath.isEmpty()) {
+                selectedDirectory = new File(directoryPath);
+                directoryChooser.setInitialDirectory(selectedDirectory);
+                LoadFolder();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void openNewWindow(String windowName) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(windowName + ".fxml"));
 
             Parent root = fxmlLoader.load();
 
-            SearchController secondController = fxmlLoader.getController();
-            secondController.setMainController(this);
-            secondController.setTagType(tagSearch);
-            secondController.setWordSearch(textSearch);
-
             Stage stage = new Stage();
-            stage.setTitle("Search Text");
+
+            if(windowName.equals("Search-Interface")){
+                SearchController secondController = fxmlLoader.getController();
+                secondController.setMainController(this);
+                secondController.setTagType(tagSearch);
+                secondController.setWordSearch(textSearch);
+
+                stage.setTitle("Search Text");
+            }
+            else if(windowName.equals("Parameter-Interface")){
+                ParameterController secondController = fxmlLoader.getController();
+                secondController.setMainController(this);
+                secondController.setPathDirectory(selectedDirectory.getAbsolutePath());
+                stage.setTitle("Settings");
+            }
+
+
             stage.setScene(new Scene(root));
             stage.show();
         } catch (Exception e) {
@@ -316,7 +370,6 @@ public class MainController {
         BGImage.setLayoutX(layoutX);
         BGImage.setLayoutY(layoutY);
 
-        //CssTextArea
         TextEntry.setPrefHeight(TprefHeight);
         TextEntry.setPrefWidth(TprefWidth);
         TextEntry.setLayoutX(TlayoutX);
@@ -325,7 +378,9 @@ public class MainController {
         if(fileName.equals("Dialogue")){
             TextEntry.setStyle("-fx-font-size: 21px;");
             NameEntry.setDisable(false);
-            NameEntry.setText(actualFormat.getSpeakerName());
+            if(actualFormat.getSpeakerName()!=null){
+                NameEntry.setText(actualFormat.getSpeakerName());
+            }
             NameEntry.setOpacity(1);
             BGLn = 2;
         }
@@ -557,7 +612,7 @@ public class MainController {
                                         if (tagSearch.equals("All") || tagSearch.equals("Source")) {
                                             NodeList sourceList = element.getElementsByTagName("source");
                                             for (int j = 0; j < sourceList.getLength(); j++) {
-                                                if (sourceList.getLength() > j && sourceList.item(0).getTextContent().contains(textSearch)) {
+                                                if (sourceList.getLength() > j && sourceList.item(j).getTextContent().contains(textSearch)) {
                                                     IDView.getItems().add("id" + element.getAttribute("id"));
                                                 }
                                             }
@@ -565,7 +620,7 @@ public class MainController {
                                         if (tagSearch.equals("All") || tagSearch.equals("Target")) {
                                             NodeList targetList = element.getElementsByTagName("target");
                                             for (int j = 0; j < targetList.getLength(); j++) {
-                                                if (targetList.getLength() > j && targetList.item(0).getTextContent().contains(textSearch)) {
+                                                if (targetList.getLength() > j && targetList.item(j).getTextContent().contains(textSearch)) {
                                                     IDView.getItems().add("id" + element.getAttribute("id"));
                                                 }
                                             }
@@ -658,20 +713,29 @@ public class MainController {
                 Document document = builder.parse(file);
 
                 document.getDocumentElement().normalize();
+                NodeList entryList = document.getElementsByTagName("entry");
 
-                if (tagSearch.equals("All") || tagSearch.equals("Source")) {
-                    NodeList sourceList = document.getElementsByTagName("source");
-                    for (int i = 0; i < sourceList.getLength(); i++) {
-                        if (sourceList.getLength() > i && sourceList.item(0).getTextContent().contains(textSearch)) {
-                            return true;
-                        }
-                    }
-                }
-                if (tagSearch.equals("All") || tagSearch.equals("Target")) {
-                    NodeList targetList = document.getElementsByTagName("target");
-                    for (int i = 0; i < targetList.getLength(); i++) {
-                        if (targetList.getLength() > i && targetList.item(0).getTextContent().contains(textSearch)) {
-                            return true;
+                for(int j = 0; j < entryList.getLength(); j++) {
+                    Node node = entryList.item(j);
+                    if (node.getNodeType() == Node.ELEMENT_NODE) {
+                        Element element = (Element) node;
+                        if (element.hasAttribute("id")) {
+                            if (tagSearch.equals("All") || tagSearch.equals("Source")) {
+                                NodeList sourceList = document.getElementsByTagName("source");
+                                for (int i = 0; i < sourceList.getLength(); i++) {
+                                    if (sourceList.getLength() > i && sourceList.item(i).getTextContent().contains(textSearch)) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            if (tagSearch.equals("All") || tagSearch.equals("Target")) {
+                                NodeList targetList = document.getElementsByTagName("target");
+                                for (int i = 0; i < targetList.getLength(); i++) {
+                                    if (targetList.getLength() > i && targetList.item(i).getTextContent().contains(textSearch)) {
+                                        return true;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -813,4 +877,69 @@ public class MainController {
         return filePathBuilder.toString();
     }
 
+    private void copySourceToTarget(String id) {
+        if (selectedDirectory != null) {
+            String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
+            if (filePath.toLowerCase().endsWith(".xml")) {
+                File selectedFile = new File(filePath);
+                String relativePath = fileLocations.get(selectedFile.getName());
+                if (relativePath != null) {
+                    File xmlFile = new File(selectedDirectory, relativePath);
+                    try {
+                        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                        DocumentBuilder builder = factory.newDocumentBuilder();
+                        Document document = builder.parse(xmlFile);
+                        document.getDocumentElement().normalize();
+
+                        NodeList entryList = document.getElementsByTagName("entry");
+                        for (int i = 0; i < entryList.getLength(); i++) {
+                            Node node = entryList.item(i);
+                            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                                Element element = (Element) node;
+                                if (element.hasAttribute("id") && element.getAttribute("id").equals(id)) {
+                                    NodeList sourceList = element.getElementsByTagName("source");
+                                    NodeList targetList = element.getElementsByTagName("target");
+                                    if (targetList.getLength() > 0) {
+                                        Node targetNode = targetList.item(0);
+
+                                        if(id.equals(actualID)){
+                                            targetNode.setTextContent(actualFormat.getCodeTextFormat());
+                                        }
+                                        else{
+                                            targetNode.setTextContent(sourceList.item(0).getTextContent());
+                                        }
+
+                                        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                                        Transformer transformer = transformerFactory.newTransformer();
+                                        DOMSource source = new DOMSource(document);
+                                        StreamResult result = new StreamResult(new FileOutputStream(xmlFile));
+                                        transformer.transform(source, result);
+                                    }
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    public void setErrorLabel(String errorLabel) {
+        ErrorLabel.setText(errorLabel);
+    }
+
+    public void setTextSearch(String textSearch) {
+        this.textSearch = textSearch;
+    }
+
+    public void setTagSearch(String tagSearch) {
+        this.tagSearch = tagSearch;
+    }
+
+    public File getSelectedDirectory() {
+        return selectedDirectory;
+    }
 }

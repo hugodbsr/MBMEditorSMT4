@@ -1,4 +1,4 @@
-package com.example.mbmeditorsmt4;
+package interfaceEditor;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
