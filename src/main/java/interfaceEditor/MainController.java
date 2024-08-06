@@ -5,7 +5,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.*;
+import javafx.scene.image.Image;
 import javafx.scene.input.*;
 import javafx.stage.*;
 import org.w3c.dom.*;
@@ -16,10 +22,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 
-public class MainController {
+import static interfaceEditor.TextUtils.*;
+import static interfaceEditor.FileUtils.*;
+
+public class MainController{
     @FXML
     private MenuItem redButton;
 
@@ -126,7 +136,7 @@ public class MainController {
     private Format actualFormat;
     private String toDisplay = "source";
     private String actualID;
-    private int BGLn = 1;
+    private int BGLn = 2;
 
     private String textSearch;
     private String tagSearch;
@@ -136,59 +146,12 @@ public class MainController {
 
     @FXML
     private void initialize() {
+        CopyWholeSource.setOnAction(e -> CopyWholeID("source"));
+        CopyWholeTarget.setOnAction(e -> CopyWholeID("target"));
 
-        ApplyID.setOnAction(e->{
-            SaveActualID();
-            copySourceToTarget(actualID);
-            displayForId(actualID, toDisplay);
-        });
-
-        ApplyWhole.setOnAction(e -> {
-            if (selectedDirectory != null) {
-                String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
-                if (filePath.toLowerCase().endsWith(".xml")) {
-                    File selectedFile = new File(filePath);
-                    String relativePath = fileLocations.get(selectedFile.getName());
-                    if (relativePath != null) {
-                        File xmlFile = new File(selectedDirectory, relativePath);
-                        try {
-                            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                            DocumentBuilder builder = factory.newDocumentBuilder();
-                            Document document = builder.parse(xmlFile);
-                            document.getDocumentElement().normalize();
-
-                            NodeList entryList = document.getElementsByTagName("entry");
-                            if(actualID != null){
-                                SaveActualID();
-                            }
-                            for (int i = 0; i < entryList.getLength(); i++) {
-                                Node node = entryList.item(i);
-                                if (node.getNodeType() == Node.ELEMENT_NODE) {
-                                    Element element = (Element) node;
-                                    if (element.hasAttribute("id")) {
-                                        String id = element.getAttribute("id");
-                                        System.out.println(id);
-                                        copySourceToTarget(id);
-                                    }
-                                }
-                            }
-                            displayForId(actualID, toDisplay);
-                        } catch (ParserConfigurationException | SAXException | IOException e1) {
-                            e1.printStackTrace();
-                        }
-                    }
-                }
-            }
-        });
-
-        CopyWholeSource.setOnAction(e->CopyWholeID("source"));
-        CopyWholeTarget.setOnAction(e->CopyWholeID("target"));
-
-        CopyID.setOnAction(e -> {
-            content.putString(actualFormat.toStringCorrect());
-            clipboard.setContent(content);
-            ErrorLabel.setText("Text have been copied to Clipboard");
-        });
+        ApplyID.setOnAction(e -> handleApplyID());
+        ApplyWhole.setOnAction(e -> handleApplyWhole());
+        CopyID.setOnAction(e -> handleCopyID());
 
         Search1.setOnAction(event -> openNewWindow("Search-Interface"));
         Search2.setOnAction(event -> {
@@ -202,36 +165,53 @@ public class MainController {
         redButton.setOnAction(event -> changeTextColor("£", "red"));
         blackButton.setOnAction(event -> changeTextColor("§", "black"));
         blueButton.setOnAction(event -> changeTextColor("µ", "blue"));
+
         SourceButton.setOnAction(event -> displaySource());
         OriginButton.setOnAction(event -> displayTarget());
         SaveIDButton.setOnAction(event -> SaveActualID());
-        ResetID.setOnAction(event -> displayForId(actualID, toDisplay));
+        ResetID.setOnAction(event -> {
+            actualFormat = new Format(actualFormat.getORIGINALcodeTextFormat(), actualFormat.getORIGINALcodeTextFormat());
+            XMLText.setText(actualFormat.getORIGINALcorrectTextFormat().get(0));
+            TextEntry.replaceText(actualFormat.getORIGINALcorrectTextFormat().get(0));
+        });
 
-        BG1.setOnAction(event -> changeBackgroundIMG("Dialogue", 143.0, 551.0, 1.0, 121.0,85., 467., 31., 150.));
-        BG2.setOnAction(event -> changeBackgroundIMG("Explanation", 218., 563., 3., 143, 85., 467., 31., 150.));
-        BG3.setOnAction(event -> changeBackgroundIMG("Quest", 218.0, 563.0, 4.0, 23.0, 250., 515., 30., 27.));
-        BG4.setOnAction(event -> changeBackgroundIMG("Tutorial", 218., 563., 3., 38., 120., 473., 33., 80.));
-        BG5.setOnAction(event -> changeBackgroundIMG("Choice", 218., 563., 3., 24., 133., 517., 60., 100.));
+        BG1.setOnAction(event -> changeBackgroundIMG("Dialogue", 143.0, 551.0, 1.0, 121.0, 85.0, 467.0, 31.0, 150.0));
+        BG2.setOnAction(event -> changeBackgroundIMG("Explanation", 218.0, 563.0, 3.0, 143.0, 85.0, 467.0, 31.0, 150.0));
+        BG3.setOnAction(event -> changeBackgroundIMG("Quest", 218.0, 563.0, 4.0, 23.0, 250.0, 515.0, 30.0, 27.0));
+        BG4.setOnAction(event -> changeBackgroundIMG("Tutorial", 218.0, 563.0, 3.0, 38.0, 120.0, 473.0, 33.0, 80.0));
+        BG5.setOnAction(event -> changeBackgroundIMG("Choice", 218.0, 563.0, 3.0, 24.0, 133.0, 517.0, 60.0, 100.0));
         BG6.setOnAction(event -> changeBackgroundIMG("", 0, 0, 0, 0, 230, 550, 0, 0));
 
         PreviousText.setOnAction(event -> ChangeDisplayedText("PREVIOUS"));
         NextText.setOnAction(event -> ChangeDisplayedText("NEXT"));
 
-        directoryChooser = new DirectoryChooser();
-
         FolderButton.setOnAction(event -> SelectAndLoadFolder());
         MenuSelectFolder.setOnAction(event -> SelectAndLoadFolder());
 
         TextEntry.setOnKeyTyped(event -> updateTextEntry());
+        NameEntry.setOnKeyTyped(e -> handleNameEntry());
 
-        NameEntry.setOnKeyTyped(e -> {
-            if(!actualFormat.getSpeakerName().equals(XMLText.getText())){
-                actualFormat.setSpeakerName(NameEntry.getText());
-                actualFormat.convertToCode();
-                XMLText.setText(actualFormat.getCodeTextFormat());
+        configureTreeViewListeners();
+        loadProperties();
+
+        configureContextMenu();
+    }
+
+    private void configureContextMenu() {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem openDirectoryMenuItem = new MenuItem("Open Directory");
+        contextMenu.getItems().add(openDirectoryMenuItem);
+        openDirectoryMenuItem.setOnAction(event -> openFileDirectory());
+
+        FolderView.setOnContextMenuRequested(event -> {
+            if (FolderView.getSelectionModel().getSelectedItem() != null) {
+                contextMenu.show(FolderView, event.getScreenX(), event.getScreenY());
             }
+            event.consume();
         });
+    }
 
+    private void configureTreeViewListeners() {
         FolderView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 String filePath = buildFilePath(newValue);
@@ -248,57 +228,161 @@ public class MainController {
                 displayForId(actualID, toDisplay);
             }
         });
-        loadProperties();
     }
 
-    public void CopyWholeID(String tag){
-        ErrorLabel.setText("Text have been copied to Clipboard");
-        if (selectedDirectory != null) {
-            String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
-            if (filePath.toLowerCase().endsWith(".xml")) {
-                File selectedFile = new File(filePath);
-                String relativePath = fileLocations.get(selectedFile.getName());
-                if (relativePath != null) {
-                    File xmlFile = new File(selectedDirectory, relativePath);
-                    try {
-                        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                        DocumentBuilder builder = factory.newDocumentBuilder();
-                        Document document = builder.parse(xmlFile);
+    private void handleApplyID() {
+        if (actualID == null || actualID.isEmpty()) {
+            ErrorLabel.setText("No ID selected to apply.");
+            return;
+        }
+        SaveActualID();
+        copySourceToTarget(actualID);
+        displayForId(actualID, toDisplay);
+    }
 
-                        document.getDocumentElement().normalize();
-                        NodeList entryList = document.getElementsByTagName("entry");
+    private void handleApplyWhole() {
+        if (selectedDirectory == null) {
+            ErrorLabel.setText("No directory selected.");
+            return;
+        }
+        String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
+        if (!filePath.toLowerCase().endsWith(".xml")) {
+            ErrorLabel.setText("Selected file is not an XML file.");
+            return;
+        }
+        File selectedFile = new File(filePath);
+        String relativePath = fileLocations.get(selectedFile.getName());
+        if (relativePath == null) {
+            ErrorLabel.setText("Relative path not found for the selected file.");
+            return;
+        }
+        File xmlFile = new File(selectedDirectory, relativePath);
+        try {
+            Document document = parseXmlFile(xmlFile);
+            NodeList entryList = document.getElementsByTagName("entry");
+            if (actualID != null) {
+                SaveActualID();
+            }
+            processEntries(entryList);
+            displayForId(actualID, toDisplay);
+        } catch (Exception e) {
+            handleError("Error processing XML file", e);
+        }
+    }
 
-                        String renvoie = "";
+    private Document parseXmlFile(File xmlFile) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document document = builder.parse(xmlFile);
+        document.getDocumentElement().normalize();
+        return document;
+    }
 
-                        for (int i = 0; i < entryList.getLength(); i++) {
-                            Node node = entryList.item(i);
-                            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                                Element element = (Element) node;
-                                NodeList sourceList = element.getElementsByTagName("source");
-                                NodeList targetList = element.getElementsByTagName("target");
-                                if (sourceList.getLength() > 0) {
-                                    actualTextDisplay = 0;
-                                    Node sourceNode = sourceList.item(0);
-                                    Node targetNode = targetList.item(0);
-                                    Format format = new Format(sourceNode.getTextContent(), targetNode.getTextContent());
-                                    if(tag.equals("source")){
-                                        renvoie += format.toStringCorrect();
-                                    }
-                                    if(tag.equals("target")){
-                                        renvoie += format.toStringCorrectORIGINAL();
-                                    }
-                                }
-                            }
+    private void processEntries(NodeList entryList) {
+        for (int i = 0; i < entryList.getLength(); i++) {
+            Node node = entryList.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                if (element.hasAttribute("id")) {
+                    String id = element.getAttribute("id");
+                    System.out.println(id);
+                    copySourceToTarget(id);
+                }
+            }
+        }
+    }
+
+    private void handleCopyID() {
+        if (actualFormat == null) {
+            ErrorLabel.setText("No format available to copy.");
+            return;
+        }
+        content.putString(actualFormat.toStringCorrect());
+        clipboard.setContent(content);
+        ErrorLabel.setText("Text has been copied to Clipboard.");
+    }
+
+    private void handleNameEntry() {
+        if (actualFormat != null && !actualFormat.getSpeakerName().equals(XMLText.getText())) {
+            actualFormat.setSpeakerName(NameEntry.getText());
+            actualFormat.convertToCode();
+            XMLText.setText(actualFormat.getCodeTextFormat());
+        }
+    }
+
+
+    private void openFileDirectory() {
+        TreeItem<String> selectedItem = FolderView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            String filePath = buildFilePath(selectedItem);
+            File file = new File(filePath);
+            if (file.exists()) {
+                try {
+                    Desktop.getDesktop().open(file.getParentFile());
+                } catch (IOException e) {
+                    ErrorLabel.setText("Error when try to open directory : " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                ErrorLabel.setText("Selected file does not exist.");
+            }
+        } else {
+            ErrorLabel.setText("No file selected.");
+        }
+    }
+
+    private void handleError(String message, Exception e) {
+        ErrorLabel.setText(message + ": " + e.getMessage());
+        e.printStackTrace();
+    }
+
+    public void CopyWholeID(String tag) {
+        String filePath = buildFilePath(FolderView.getSelectionModel().getSelectedItem());
+        File selectedFile = new File(filePath);
+        String relativePath = fileLocations.get(selectedFile.getName());
+        if (relativePath == null) {
+            ErrorLabel.setText("Relative path not found for the selected file.");
+            return;
+        }
+        File xmlFile = new File(selectedDirectory, relativePath);
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(xmlFile);
+
+            document.getDocumentElement().normalize();
+            NodeList entryList = document.getElementsByTagName("entry");
+
+            String renvoie = "";
+
+            for (int i = 0; i < entryList.getLength(); i++) {
+                Node node = entryList.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+                    NodeList sourceList = element.getElementsByTagName("source");
+                    NodeList targetList = element.getElementsByTagName("target");
+                    if (sourceList.getLength() > 0) {
+                        actualTextDisplay = 0;
+                        Node sourceNode = sourceList.item(0);
+                        Node targetNode = targetList.item(0);
+                        Format format = new Format(sourceNode.getTextContent(), targetNode.getTextContent());
+                        if (tag.equals("source")) {
+                            renvoie += format.toStringCorrect();
                         }
-
-                        content.putString(renvoie);
-                        clipboard.setContent(content);
-
-                    } catch (ParserConfigurationException | SAXException | IOException e) {
-                        e.printStackTrace();
+                        if (tag.equals("target")) {
+                            renvoie += format.toStringCorrectORIGINAL();
+                        }
                     }
                 }
             }
+
+            content.putString(renvoie);
+            clipboard.setContent(content);
+            ErrorLabel.setText("Text has been copied to Clipboard.");
+
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            e.printStackTrace();
+            ErrorLabel.setText("Error processing XML file: " + e.getMessage());
         }
     }
 
@@ -355,9 +439,8 @@ public class MainController {
 
     private void changeBackgroundIMG(String fileName, double fitHeight, double fitWidth, double layoutX, double layoutY, double TprefHeight, double TprefWidth, double TlayoutX, double TlayoutY) {
         if(!fileName.isEmpty()){
-            String imagePath = Objects.requireNonNull(getClass().getResource("/com/example/mbmeditorsmt4/" + fileName + ".png")).toExternalForm();
+            String imagePath = Objects.requireNonNull(getClass().getResource("/interfaceEditor/" + fileName + ".png")).toExternalForm();
             Image image = new Image(imagePath);
-            //image
             BGImage.setImage(image);
         }
         else{
@@ -378,8 +461,10 @@ public class MainController {
         if(fileName.equals("Dialogue")){
             TextEntry.setStyle("-fx-font-size: 21px;");
             NameEntry.setDisable(false);
-            if(actualFormat.getSpeakerName()!=null){
-                NameEntry.setText(actualFormat.getSpeakerName());
+            if(actualFormat!=null){
+                if(actualFormat.getSpeakerName()!=null){
+                    NameEntry.setText(actualFormat.getSpeakerName());
+                }
             }
             NameEntry.setOpacity(1);
             BGLn = 2;
@@ -453,6 +538,7 @@ public class MainController {
             if (idFound) {
                 TransformerFactory transformerFactory = TransformerFactory.newInstance();
                 Transformer transformer = transformerFactory.newTransformer();
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
                 DOMSource source = new DOMSource(doc);
                 StreamResult result = new StreamResult(xmlFile);
                 transformer.transform(source, result);
@@ -466,21 +552,22 @@ public class MainController {
         }
     }
 
-    private void ChangeButtonEnable(){
-        if(actualFormat == null || actualFormat.getCorrectTextFormat().isEmpty()){
+    private void ChangeButtonEnable() {
+        if (actualFormat == null || actualFormat.getCorrectTextFormat().isEmpty()) {
             NextText.setDisable(true);
-            NextText.setDisable(false);
+            PreviousText.setDisable(true);
+            return;
         }
         PreviousText.setDisable(actualTextDisplay == 0);
-        if(actualTextDisplay < actualFormat.getCorrectTextFormat().size()){
-            NextText.setDisable(false);
-        }
-        if(actualTextDisplay == actualFormat.getCorrectTextFormat().size()-1){
-            NextText.setDisable(true);
-        }
+        NextText.setDisable(actualTextDisplay >= actualFormat.getCorrectTextFormat().size() - 1);
     }
 
     private void updateTextEntry() {
+        if (actualFormat == null) {
+            ErrorLabel.setText("No format available to update.");
+            return;
+        }
+
         if (TextEntry.getCurrentParagraph() > BGLn) {
             TextEntry.deletePreviousChar();
             ErrorLabel.setText("Cannot create a new line");
@@ -494,29 +581,30 @@ public class MainController {
 
         if (!currenTextEntry.equals(actualTextFormat)) {
             format.set(actualTextDisplay, currenTextEntry);
-
             actualFormat.setCorrectTextFormat(format);
             actualFormat.convertToCode();
             XMLText.setText(actualFormat.getCodeTextFormat());
-            applyColor();
+            applyColor(TextEntry);
         }
     }
 
-    private void ChangeDisplayedText(String direction){
-        if(!actualFormat.getCorrectTextFormat().isEmpty()){
-            if(direction.equals("NEXT") && actualTextDisplay < actualFormat.getCorrectTextFormat().size()-1){
-                actualTextDisplay++;
-                TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
-                NameEntry.setText(actualFormat.getSpeakerName());
-            }
-            if(direction.equals("PREVIOUS") && actualTextDisplay > 0){
-                actualTextDisplay--;
-                TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
-                NameEntry.setText(actualFormat.getSpeakerName());
-            }
-            applyColor();
-            ChangeButtonEnable();
+    private void ChangeDisplayedText(String direction) {
+        if (actualFormat == null || actualFormat.getCorrectTextFormat().isEmpty()) {
+            ErrorLabel.setText("No text format available to display.");
+            return;
         }
+
+        if (direction.equals("NEXT") && actualTextDisplay < actualFormat.getCorrectTextFormat().size() - 1) {
+            actualTextDisplay++;
+            TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
+            NameEntry.setText(actualFormat.getSpeakerName());
+        } else if (direction.equals("PREVIOUS") && actualTextDisplay > 0) {
+            actualTextDisplay--;
+            TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
+            NameEntry.setText(actualFormat.getSpeakerName());
+        }
+        applyColor(TextEntry);
+        ChangeButtonEnable();
     }
 
     private void displayForId(String id, String toDisplay) {
@@ -528,57 +616,49 @@ public class MainController {
                 if (relativePath != null) {
                     File xmlFile = new File(selectedDirectory, relativePath);
                     try {
-                        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                        DocumentBuilder builder = factory.newDocumentBuilder();
-                        Document document = builder.parse(xmlFile);
-
-                        document.getDocumentElement().normalize();
+                        Document document = parseXmlFile(xmlFile);
                         NodeList entryList = document.getElementsByTagName("entry");
+                        Element element = findElementById(entryList, id);
 
-                        for (int i = 0; i < entryList.getLength(); i++) {
-                            Node node = entryList.item(i);
-                            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                                Element element = (Element) node;
-                                if (element.hasAttribute("id") && element.getAttribute("id").equals(id)) {
-                                    NodeList sourceList = element.getElementsByTagName("source");
-                                    NodeList targetList = element.getElementsByTagName("target");
-                                    if (sourceList.getLength() > 0) {
-                                        actualTextDisplay = 0;
-                                        Node sourceNode = sourceList.item(0);
-                                        Node targetNode = targetList.item(0);
-                                        actualFormat = new Format(sourceNode.getTextContent(), targetNode.getTextContent());
-                                        if(toDisplay.equals("source")){
-                                            XMLText.setText(sourceNode.getTextContent());
-                                            TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(0));
-                                        }
-                                        else{
-                                            XMLText.setText(targetNode.getTextContent());
-                                            TextEntry.replaceText(actualFormat.getORIGINALcorrectTextFormat().get(0));
-                                            TextEntry.setDisable(true);
-                                            buttonToolBar.setDisable(true);
+                        if (element != null) {
+                            NodeList sourceList = element.getElementsByTagName("source");
+                            NodeList targetList = element.getElementsByTagName("target");
+                            if (sourceList.getLength() > 0 && targetList.getLength() > 0) {
+                                actualTextDisplay = 0;
+                                Node sourceNode = sourceList.item(0);
+                                Node targetNode = targetList.item(0);
+                                actualFormat = new Format(sourceNode.getTextContent(), targetNode.getTextContent());
 
-                                        }
-
-                                        if(actualFormat.getSpeakerName() == null){
-                                            NameEntry.setDisable(true);
-                                            buttonToolBar.setDisable(true);
-                                            NameEntry.clear();
-                                        }
-                                        else{
-                                            NameEntry.setDisable(false);
-                                            buttonToolBar.setDisable(false);
-                                            TextEntry.setDisable(false);
-                                            NameEntry.setText(actualFormat.getSpeakerName());
-                                        }
-                                        ChangeButtonEnable();
-                                        applyColor();
-                                        return;
-                                    }
+                                if (toDisplay.equals("source")) {
+                                    XMLText.setText(sourceNode.getTextContent());
+                                    TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(0));
+                                } else {
+                                    XMLText.setText(targetNode.getTextContent());
+                                    TextEntry.replaceText(actualFormat.getORIGINALcorrectTextFormat().get(0));
+                                    TextEntry.setDisable(true);
+                                    buttonToolBar.setDisable(true);
                                 }
+
+                                if (actualFormat.getSpeakerName() == null) {
+                                    NameEntry.setDisable(true);
+                                    buttonToolBar.setDisable(true);
+                                    NameEntry.clear();
+                                } else {
+                                    NameEntry.setDisable(false);
+                                    buttonToolBar.setDisable(false);
+                                    TextEntry.setDisable(false);
+                                    NameEntry.setText(actualFormat.getSpeakerName());
+                                }
+                                ChangeButtonEnable();
+                                applyColor(TextEntry);
+                            } else {
+                                ErrorLabel.setText("Source or target not found in the XML file");
                             }
+                        } else {
+                            ErrorLabel.setText("ID not found in the XML file");
                         }
-                    } catch (ParserConfigurationException | SAXException | IOException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        handleError("Error displaying ID", e);
                     }
                 }
             }
@@ -592,11 +672,7 @@ public class MainController {
             if (relativePath != null) {
                 File xmlFile = new File(selectedDirectory, relativePath);
                 try {
-                    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder builder = factory.newDocumentBuilder();
-                    Document document = builder.parse(xmlFile);
-
-                    document.getDocumentElement().normalize();
+                    Document document = parseXmlFile(xmlFile);
                     NodeList entryList = document.getElementsByTagName("entry");
 
                     for (int i = 0; i < entryList.getLength(); i++) {
@@ -604,11 +680,10 @@ public class MainController {
                         if (node.getNodeType() == Node.ELEMENT_NODE) {
                             Element element = (Element) node;
                             if (element.hasAttribute("id")) {
-                                if(tagSearch != null && textSearch != null){
-                                    if(textSearch.isEmpty()){
+                                if (tagSearch != null && textSearch != null) {
+                                    if (textSearch.isEmpty()) {
                                         IDView.getItems().add("id" + element.getAttribute("id"));
-                                    }
-                                    else{
+                                    } else {
                                         if (tagSearch.equals("All") || tagSearch.equals("Source")) {
                                             NodeList sourceList = element.getElementsByTagName("source");
                                             for (int j = 0; j < sourceList.getLength(); j++) {
@@ -626,21 +701,19 @@ public class MainController {
                                             }
                                         }
                                     }
-                                }
-                                else{
+                                } else {
                                     IDView.getItems().add("id" + element.getAttribute("id"));
                                 }
                             }
                         }
                     }
-                    if(IDView.getItems().isEmpty()) {
+                    if (IDView.getItems().isEmpty()) {
                         ErrorLabel.setText("No ID in this file");
-                    }
-                    else{
+                    } else {
                         ErrorLabel.setText("");
                     }
-                } catch (ParserConfigurationException | SAXException | IOException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    handleError("Error loading IDs", e);
                 }
             }
         }
@@ -703,111 +776,44 @@ public class MainController {
         if (tagSearch == null && textSearch == null) {
             return true;
         }
-        else if(textSearch.isEmpty()) {
+        if (textSearch.isEmpty()) {
             return true;
         }
-        else {
-            try {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                Document document = builder.parse(file);
+        try {
+            Document document = parseXmlFile(file);
+            NodeList entryList = document.getElementsByTagName("entry");
 
-                document.getDocumentElement().normalize();
-                NodeList entryList = document.getElementsByTagName("entry");
-
-                for(int j = 0; j < entryList.getLength(); j++) {
-                    Node node = entryList.item(j);
-                    if (node.getNodeType() == Node.ELEMENT_NODE) {
-                        Element element = (Element) node;
-                        if (element.hasAttribute("id")) {
-                            if (tagSearch.equals("All") || tagSearch.equals("Source")) {
-                                NodeList sourceList = document.getElementsByTagName("source");
-                                for (int i = 0; i < sourceList.getLength(); i++) {
-                                    if (sourceList.getLength() > i && sourceList.item(i).getTextContent().contains(textSearch)) {
-                                        return true;
-                                    }
-                                }
-                            }
-                            if (tagSearch.equals("All") || tagSearch.equals("Target")) {
-                                NodeList targetList = document.getElementsByTagName("target");
-                                for (int i = 0; i < targetList.getLength(); i++) {
-                                    if (targetList.getLength() > i && targetList.item(i).getTextContent().contains(textSearch)) {
-                                        return true;
-                                    }
-                                }
-                            }
+            for (int i = 0; i < entryList.getLength(); i++) {
+                Node node = entryList.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+                    if (tagSearch.equals("All") || tagSearch.equals("Source")) {
+                        NodeList sourceList = element.getElementsByTagName("source");
+                        if (containsText(sourceList, textSearch)) {
+                            return true;
+                        }
+                    }
+                    if (tagSearch.equals("All") || tagSearch.equals("Target")) {
+                        NodeList targetList = element.getElementsByTagName("target");
+                        if (containsText(targetList, textSearch)) {
+                            return true;
                         }
                     }
                 }
-            }catch (ParserConfigurationException | SAXException | IOException e) {
-                e.printStackTrace();
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return false;
     }
 
-    private boolean containsXmlFiles(File directory) {
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    if (containsXmlFiles(file)) {
-                        return true;
-                    }
-                } else if (file.isFile() && file.getName().toLowerCase().endsWith(".xml")) {
-                    if (fileMatchesSearch(file)) {
-                        return true;
-                    }
-                }
+    private boolean containsText(NodeList nodeList, String text) {
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            if (nodeList.item(i).getTextContent().contains(text)) {
+                return true;
             }
         }
         return false;
-    }
-
-    private String getRelativePath(File file, File baseDirectory) {
-        String filePath = file.getAbsolutePath();
-        String basePath = baseDirectory.getAbsolutePath();
-
-        if (filePath.startsWith(basePath)) {
-            String relativePath = filePath.substring(basePath.length());
-            if (relativePath.startsWith(File.separator)) {
-                relativePath = relativePath.substring(1);
-            }
-            return relativePath;
-        } else {
-            return null;
-        }
-    }
-
-    private void applyColor() {
-        String text = TextEntry.getText();
-        TextEntry.setStyle(0, text.length(), "-fx-fill: black");
-        boolean isRED = false;
-        if(text.contains("£") || text.contains("µ")){
-            for (int i = 0; i < text.length(); i++) {
-                isRED = text.charAt(i) == '£' || (text.charAt(i) != 'µ' && isRED);
-                if(text.charAt(i) == '£' || text.charAt(i) == 'µ') {
-                    int start = i;
-                    TextEntry.replaceText(i, i+1, "");
-                    text = TextEntry.getText();
-                    while (i < text.length() && text.charAt(i) != '§') {
-                        i++;
-                    }
-                    int end = i;
-                    TextEntry.replaceText(i, i+1, "");
-                    text = TextEntry.getText();
-                    if(isRED){
-                        TextEntry.setStyle(start, end,"-fx-fill: red");
-                    }
-                    else{
-                        TextEntry.setStyle(start, end,"-fx-fill: blue");
-                    }
-                }
-            }
-        }
-        else{
-            TextEntry.setStyle(0, text.length(), "-fx-fill: black");
-        }
     }
 
     private void changeTextColor(String colorSymbol, String colorName) {
@@ -838,21 +844,11 @@ public class MainController {
         TextEntry.setStyle(selectionStart, selectionEnd, "-fx-fill: " + colorName);
     }
 
-    private int adjustPosition(String text, int position){
-        int cpt = 0;
-        for(int i = 0; i < position; i++){
-            if(text.charAt(i) == '£' || text.charAt(i) == '§' || text.charAt(i) == 'µ'){
-                cpt++;
-            }
-        }
-        return position + cpt;
-    }
-
     private void displaySource() {
         toDisplay = "source";
         TextEntry.replaceText(actualFormat.getCorrectTextFormat().get(actualTextDisplay));
         XMLText.setText(actualFormat.getCodeTextFormat());
-        applyColor();
+        applyColor(TextEntry);
         TextEntry.setDisable(false);
     }
 
@@ -860,7 +856,7 @@ public class MainController {
         toDisplay = "target";
         TextEntry.replaceText(actualFormat.getORIGINALcorrectTextFormat().get(actualTextDisplay));
         XMLText.setText(actualFormat.getORIGINALcodeTextFormat());
-        applyColor();
+        applyColor(TextEntry);
         TextEntry.setDisable(true);
     }
 
@@ -886,41 +882,30 @@ public class MainController {
                 if (relativePath != null) {
                     File xmlFile = new File(selectedDirectory, relativePath);
                     try {
-                        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                        DocumentBuilder builder = factory.newDocumentBuilder();
-                        Document document = builder.parse(xmlFile);
-                        document.getDocumentElement().normalize();
-
+                        Document document = parseXmlFile(xmlFile);
                         NodeList entryList = document.getElementsByTagName("entry");
-                        for (int i = 0; i < entryList.getLength(); i++) {
-                            Node node = entryList.item(i);
-                            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                                Element element = (Element) node;
-                                if (element.hasAttribute("id") && element.getAttribute("id").equals(id)) {
-                                    NodeList sourceList = element.getElementsByTagName("source");
-                                    NodeList targetList = element.getElementsByTagName("target");
-                                    if (targetList.getLength() > 0) {
-                                        Node targetNode = targetList.item(0);
+                        Element element = findElementById(entryList, id);
 
-                                        if(id.equals(actualID)){
-                                            targetNode.setTextContent(actualFormat.getCodeTextFormat());
-                                        }
-                                        else{
-                                            targetNode.setTextContent(sourceList.item(0).getTextContent());
-                                        }
-
-                                        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                                        Transformer transformer = transformerFactory.newTransformer();
-                                        DOMSource source = new DOMSource(document);
-                                        StreamResult result = new StreamResult(new FileOutputStream(xmlFile));
-                                        transformer.transform(source, result);
-                                    }
-                                    return;
+                        if (element != null) {
+                            NodeList sourceList = element.getElementsByTagName("source");
+                            NodeList targetList = element.getElementsByTagName("target");
+                            if (targetList.getLength() > 0) {
+                                Node targetNode = targetList.item(0);
+                                if (id.equals(actualID)) {
+                                    targetNode.setTextContent(actualFormat.getCodeTextFormat());
+                                } else {
+                                    targetNode.setTextContent(sourceList.item(0).getTextContent());
                                 }
+
+                                FileUtils.saveDocument(document, xmlFile);
+                            } else {
+                                ErrorLabel.setText("Target not found in the XML file");
                             }
+                        } else {
+                            ErrorLabel.setText("ID not found in the XML file");
                         }
-                    } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        handleError("Error copying source to target", e);
                     }
                 }
             }
@@ -941,5 +926,9 @@ public class MainController {
 
     public File getSelectedDirectory() {
         return selectedDirectory;
+    }
+
+    public void setSelectedDirectory(String selectedDirectory) {
+        this.selectedDirectory = new File(selectedDirectory);
     }
 }

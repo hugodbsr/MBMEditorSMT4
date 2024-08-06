@@ -54,7 +54,9 @@ public class ParameterController {
         try (FileOutputStream fileOut = new FileOutputStream(iniFile)) {
             properties.store(fileOut, "Application Settings");
             mainController.setErrorLabel("Application Settings saved");
+            mainController.setSelectedDirectory(directoryPath);
             ((Stage)ApplySettings.getScene().getWindow()).close();
+            mainController.LoadFolder();
 
         } catch (IOException e) {
             e.printStackTrace();

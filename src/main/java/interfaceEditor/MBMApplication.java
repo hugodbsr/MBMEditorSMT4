@@ -3,6 +3,7 @@ package interfaceEditor;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
@@ -22,6 +23,7 @@ public class MBMApplication extends Application {
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("MBM Editor SMT4");
+        primaryStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/interfaceEditor/SMTIV.png")).toExternalForm()));
         primaryStage.resizableProperty().setValue(false);
         primaryStage.show();
     }

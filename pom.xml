@@ -12,18 +12,19 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.0</junit.version>
+        <javafx.version>22.0.2</javafx.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>22.0.1</version>
+            <version>22.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>22.0.1</version>
+            <version>22.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.fxmisc.richtext</groupId>
@@ -106,6 +107,10 @@
                 <executions>
                     <execution>
                         <id>default-cli</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jlink</goal>
+                        </goals>
                         <configuration>
                             <mainClass>interfaceEditor.MBMApplication</mainClass>
                             <launcher>app</launcher>

@@ -165,18 +165,26 @@ public class Format {
     public String toStringCorrect(){
         String renvoie = "";
         for(String correct : correctTextFormat){
-            renvoie = renvoie + correct.replace("\n", " ");
-            renvoie = renvoie + "\n\n";
+            if(correct.contains("NE PAS TRADUIRE") || correct.contains("RESERVED") || correct.contains("NOT USED") || correct.contains("Dummy")){
+                return renvoie;
+            }else{
+                renvoie = renvoie + correct.replace("\n", " ");
+            }
         }
+        renvoie = renvoie + "\n\n";
         return renvoie;
     }
 
     public String toStringCorrectORIGINAL(){
         String renvoie = "";
-        for(String correct : ORIGINALcorrectTextFormat){
-            renvoie = renvoie + correct.replace("\n", " ");
+            for(String correct : ORIGINALcorrectTextFormat){
+                if(correct.contains("NE PAS TRADUIRE") || correct.contains("RESERVED") || correct.contains("NOT USED") || correct.contains("Dummy")){
+                    return renvoie;
+                }else{
+                    renvoie = renvoie + correct.replace("\n", " ");
+                }
+            }
             renvoie = renvoie + "\n\n";
-        }
         return renvoie;
     }
 }
